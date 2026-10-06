@@ -71,10 +71,21 @@ function scheduleTick() {
 function fitToWindow() {
   const scale = Math.min(window.innerWidth / DESIGN_WIDTH, window.innerHeight / DESIGN_HEIGHT);
   root.style.setProperty("--scale", scale);
+  setZoom(zoom);
+}
+
+// The largest zoom at which the time row (including AM/PM) and the date still fit the window.
+// Rendered sizes grow linearly with zoom, so measuring at the current zoom and dividing it out gives the size at 1x.
+function maxZoom() {
+  const rects = [document.querySelector(".time"), dateEl].map((el) => el.getBoundingClientRect());
+  const width = Math.max(...rects.map((r) => r.width)) / zoom;
+  const height = (Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top))) / zoom;
+  // Leave a little room for the italic glyphs, which lean past their layout boxes.
+  return Math.min(1.5, (window.innerWidth * 0.95) / width, (window.innerHeight * 0.95) / height);
 }
 
 function setZoom(value) {
-  zoom = Math.min(1.5, Math.max(0.5, value));
+  zoom = Math.max(0.5, Math.min(value, maxZoom()));
   root.style.setProperty("--zoom", zoom);
 }
 
@@ -146,6 +157,8 @@ for (const input of document.querySelectorAll('input[name="format"]')) {
     settings.format = input.value;
     saveSettings();
     tick();
+    // AM/PM makes the 12-hour row wider, so the current zoom may no longer fit.
+    setZoom(zoom);
   });
 }
 
@@ -168,8 +181,10 @@ aboutDialog.addEventListener("click", (event) => {
 
 window.addEventListener("resize", fitToWindow);
 applyColor(settings.color);
-fitToWindow();
 scheduleTick();
+fitToWindow();
+// The digital font changes the clock's width once it loads, so re-check the zoom then.
+document.fonts.ready.then(() => setZoom(zoom));
 
 // Offline support and installability.
 if ("serviceWorker" in navigator) {
