@@ -160,3 +160,8 @@ window.addEventListener("resize", fitToWindow);
 applyColor(settings.color);
 fitToWindow();
 scheduleTick();
+
+// Offline support and installability.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
