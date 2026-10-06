@@ -1,0 +1,293 @@
+@font-face {
+  font-family: "DS-Digital";
+  src: url("fonts/DS-DIGIT.TTF") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+}
+@font-face {
+  font-family: "DS-Digital";
+  src: url("fonts/DS-DIGII.TTF") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+:root {
+  --clock-color: #ff9500;
+  --icon: #e6e6e6;
+  --scale: 1;
+  --zoom: 1;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Centre the scaled canvas in the window. */
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The design is laid out on a 2166 x 1291 canvas that is scaled to fit the window. */
+.stage {
+  flex: none;
+  width: 2166px;
+  height: 1291px;
+  transform: scale(var(--scale));
+}
+
+/* Centre the title, time and date on the canvas. */
+.clock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--clock-color);
+  transform: scale(var(--zoom));
+}
+
+.title {
+  font-family: "Segoe UI Light", "Segoe UI", "Open Sans", sans-serif;
+  font-weight: 300;
+  font-size: 101px;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.time {
+  margin-top: 45px;
+  /* Optical centring: the italic digits lean right of their layout box. */
+  margin-right: 21px;
+  font-family: "DS-Digital", monospace;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 452px;
+  line-height: normal;
+  white-space: nowrap;
+  transform: scaleX(0.93);
+}
+
+/* The colon is drawn as two slanted blocks centred in each half of the digit, rather than the font's glyph. */
+.colon {
+  position: relative;
+  color: transparent;
+}
+.colon::before,
+.colon::after {
+  content: "";
+  position: absolute;
+  width: 0.0951em;
+  height: 0.0852em;
+  border-radius: 0.0066em;
+  background: var(--clock-color);
+  transform: skewX(-4deg);
+}
+.colon::before { left: 0.0907em; top: 0.3363em; }
+.colon::after { left: 0.0752em; top: 0.5686em; }
+
+/*
+ * Every digit sits in a fixed-width cell (the font's 560/1100 em advance) so the row never shifts.
+ * The font draws "1" with a narrow advance on the left; moving it 292/1100 em to the right lines its
+ * strokes up with the right-hand segments of the other digits, like a real seven-segment display.
+ */
+.digit {
+  display: inline-block;
+  width: 0.5091em;
+}
+.digit-one { text-indent: 0.2655em; }
+
+.ampm {
+  display: inline-block;
+  position: relative;
+  top: -3px;
+  margin-left: 40px;
+  /* Balances the overflow from the horizontal stretch below so the row stays centred. */
+  margin-right: 34px;
+  font-size: 217px;
+  transform: scaleX(1.06);
+  transform-origin: 0 0;
+}
+
+.ampm[hidden] { display: none; }
+
+.date {
+  margin-top: 58px;
+  /* Balances the larger line boxes of the digit rows so the whole group centres vertically. */
+  margin-bottom: 28px;
+  font-size: 101px;
+  line-height: normal;
+  letter-spacing: 15.3px;
+  /* Letter-spacing also trails the last character; mostly cancel it so the glyphs centre (the rest offsets the italic lean). */
+  margin-right: -7.3px;
+  word-spacing: -17px;
+  font-family: "DS-Digital", monospace;
+  font-weight: 400;
+  font-style: italic;
+  white-space: pre;
+}
+
+.controls {
+  position: fixed;
+  top: 18px;
+  right: 29px;
+  display: flex;
+  gap: 9px;
+  z-index: 1;
+}
+
+.controls button {
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.controls button:hover { opacity: 1; }
+
+.controls svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--icon);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#fullscreen .fs-exit,
+#fullscreen.is-fullscreen .fs-enter { display: none; }
+#fullscreen.is-fullscreen .fs-exit { display: inline; }
+
+/* Settings drawer */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.5);
+}
+.backdrop[hidden] { display: none; }
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  width: min(320px, 100vw);
+  padding: 20px 24px;
+  overflow-y: auto;
+  background: #121212;
+  border-left: 1px solid #2a2a2a;
+  color: #e6e6e6;
+  font-family: "Segoe UI", "Open Sans", sans-serif;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+.drawer.open { transform: none; }
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.drawer h2 { font-size: 20px; font-weight: 400; }
+
+.drawer-close {
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+.drawer-close:hover { background: #222; }
+.drawer-close svg {
+  width: 100%;
+  height: 100%;
+  stroke: #e6e6e6;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.setting { margin-bottom: 28px; }
+.setting h3 {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.segmented input,
+.swatch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.segmented span {
+  display: block;
+  padding: 9px 0;
+  text-align: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+.segmented label + label span { border-left: 1px solid #333; }
+.segmented input:checked + span {
+  background: var(--clock-color);
+  color: #000;
+}
+.segmented input:focus-visible + span { outline: 2px solid #fff; outline-offset: -4px; }
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.swatch span {
+  display: block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--swatch) padding-box;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 3px #121212;
+  cursor: pointer;
+}
+.swatch input:checked + span { border-color: #e6e6e6; }
+.swatch input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
+
+.custom-color {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.custom-color input {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
