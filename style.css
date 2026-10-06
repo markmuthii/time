@@ -18,9 +18,14 @@
   --zoom: 1;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   height: 100%;
   background: #000;
   overflow: hidden;
@@ -88,8 +93,14 @@ body {
   background: var(--clock-color);
   transform: skewX(-4deg);
 }
-.colon::before { left: 0.0907em; top: 0.3363em; }
-.colon::after { left: 0.0752em; top: 0.5686em; }
+.colon::before {
+  left: 0.0907em;
+  top: 0.3363em;
+}
+.colon::after {
+  left: 0.0752em;
+  top: 0.5686em;
+}
 
 /*
  * Every digit sits in a fixed-width cell (the font's 560/1100 em advance) so the row never shifts.
@@ -100,7 +111,9 @@ body {
   display: inline-block;
   width: 0.5091em;
 }
-.digit-one { text-indent: 0.2655em; }
+.digit-one {
+  text-indent: 0.2655em;
+}
 
 .ampm {
   display: inline-block;
@@ -114,7 +127,9 @@ body {
   transform-origin: 0 0;
 }
 
-.ampm[hidden] { display: none; }
+.ampm[hidden] {
+  display: none;
+}
 
 .date {
   margin-top: 58px;
@@ -150,7 +165,9 @@ body {
   cursor: pointer;
   opacity: 0.8;
 }
-.controls button:hover { opacity: 1; }
+.controls button:hover {
+  opacity: 1;
+}
 
 .controls svg {
   width: 100%;
@@ -163,8 +180,12 @@ body {
 }
 
 #fullscreen .fs-exit,
-#fullscreen.is-fullscreen .fs-enter { display: none; }
-#fullscreen.is-fullscreen .fs-exit { display: inline; }
+#fullscreen.is-fullscreen .fs-enter {
+  display: none;
+}
+#fullscreen.is-fullscreen .fs-exit {
+  display: inline;
+}
 
 /* Settings drawer */
 .backdrop {
@@ -173,7 +194,9 @@ body {
   z-index: 2;
   background: rgba(0, 0, 0, 0.5);
 }
-.backdrop[hidden] { display: none; }
+.backdrop[hidden] {
+  display: none;
+}
 
 .drawer {
   position: fixed;
@@ -191,7 +214,9 @@ body {
   transform: translateX(100%);
   transition: transform 0.25s ease;
 }
-.drawer.open { transform: none; }
+.drawer.open {
+  transform: none;
+}
 
 .drawer-header {
   display: flex;
@@ -199,7 +224,11 @@ body {
   justify-content: space-between;
   margin-bottom: 24px;
 }
-.drawer h2 { font-size: 20px; font-weight: 400; }
+.drawer h2,
+.about h2 {
+  font-size: 20px;
+  font-weight: 400;
+}
 
 .drawer-close {
   width: 32px;
@@ -210,7 +239,9 @@ body {
   background: none;
   cursor: pointer;
 }
-.drawer-close:hover { background: #222; }
+.drawer-close:hover {
+  background: #222;
+}
 .drawer-close svg {
   width: 100%;
   height: 100%;
@@ -219,7 +250,9 @@ body {
   stroke-linecap: round;
 }
 
-.setting { margin-bottom: 28px; }
+.setting {
+  margin-bottom: 28px;
+}
 .setting h3 {
   margin-bottom: 10px;
   font-size: 12px;
@@ -249,12 +282,17 @@ body {
   font-size: 14px;
   cursor: pointer;
 }
-.segmented label + label span { border-left: 1px solid #333; }
+.segmented label + label span {
+  border-left: 1px solid #333;
+}
 .segmented input:checked + span {
   background: var(--clock-color);
   color: #000;
 }
-.segmented input:focus-visible + span { outline: 2px solid #fff; outline-offset: -4px; }
+.segmented input:focus-visible + span {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+}
 
 .swatches {
   display: flex;
@@ -272,8 +310,13 @@ body {
   box-shadow: inset 0 0 0 3px #121212;
   cursor: pointer;
 }
-.swatch input:checked + span { border-color: #e6e6e6; }
-.swatch input:focus-visible + span { outline: 2px solid #fff; outline-offset: 2px; }
+.swatch input:checked + span {
+  border-color: #e6e6e6;
+}
+.swatch input:focus-visible + span {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
 
 .custom-color {
   display: flex;
@@ -290,4 +333,106 @@ body {
   border-radius: 4px;
   background: none;
   cursor: pointer;
+}
+
+.controls svg .dot {
+  fill: var(--icon);
+  stroke: none;
+}
+
+/* About modal */
+.about {
+  margin: auto;
+  width: min(520px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #121212;
+  color: #e6e6e6;
+  font-family: "Segoe UI", "Open Sans", sans-serif;
+}
+.about::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.about-body {
+  padding: 20px 24px 24px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.about-body .drawer-header {
+  margin-bottom: 2px;
+}
+.about-body p + p {
+  margin-top: 12px;
+}
+.about h2 small {
+  font-size: 0.6em;
+}
+.about-role {
+  margin-bottom: 16px;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clock-color);
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.about-links a {
+  padding: 6px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #e6e6e6;
+  font-size: 13px;
+  text-decoration: none;
+}
+.about-links a:hover {
+  border-color: var(--clock-color);
+  color: var(--clock-color);
+}
+.about-links a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Icons take on the clock colour on hover. */
+.controls button:hover svg,
+.drawer-close:hover svg {
+  stroke: var(--clock-color);
+}
+.controls button:hover svg .dot {
+  fill: var(--clock-color);
+}
+
+/* Larger type for the about modal on desktop; it grows with the screen so it stays in proportion to the clock. */
+@media (min-width: 768px) {
+  .about {
+    font-size: clamp(17px, 0.85vw, 24px);
+    width: min(37.5em, calc(100vw - 32px));
+  }
+  .about-body {
+    padding: 1.6em 1.9em 1.9em;
+    font-size: 1em;
+  }
+  .about h2 {
+    font-size: 1.5em;
+  }
+  .about-role {
+    font-size: 0.6em;
+  }
+  .about-links a {
+    padding: 0.5em 0.9em;
+    font-size: 0.88em;
+  }
+  .about .drawer-close {
+    width: 1.9em;
+    height: 1.9em;
+    padding: 0.45em;
+  }
 }

@@ -1,4 +1,4 @@
-// Bump the version whenever the app shell changes so clients pick up the new files.
+// Changing the version clears old caches; updates show on reload either way since fetches are network-first.
 const CACHE = "time-v1";
 const SHELL = [
   "./",
@@ -32,24 +32,22 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Stale-while-revalidate: serve from cache instantly (works offline), refresh the cache in the background.
+// Network-first: always show the latest version when online, fall back to the cache when offline.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.open(CACHE).then(async (cache) => {
-      const cached = await cache.match(event.request, { ignoreSearch: true });
-      const network = fetch(event.request)
+    caches.open(CACHE).then((cache) =>
+      fetch(event.request)
         .then((response) => {
           if (response.ok || response.type === "opaque")
             cache.put(event.request, response.clone());
           return response;
         })
-        .catch(() => cached || Response.error());
-      if (cached) {
-        event.waitUntil(network);
-        return cached;
-      }
-      return network;
-    }),
+        .catch(
+          async () =>
+            (await cache.match(event.request, { ignoreSearch: true })) ||
+            Response.error(),
+        ),
+    ),
   );
 });

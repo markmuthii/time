@@ -156,6 +156,16 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && drawer.classList.contains("open")) setDrawerOpen(false);
 });
 
+// About modal: <dialog> handles centring, focus trapping and closing with Esc.
+const aboutDialog = document.getElementById("about");
+
+document.getElementById("info-open").addEventListener("click", () => aboutDialog.showModal());
+document.getElementById("about-close").addEventListener("click", () => aboutDialog.close());
+// Clicks on the backdrop land on the dialog itself; clicks on the content land on its children.
+aboutDialog.addEventListener("click", (event) => {
+  if (event.target === aboutDialog) aboutDialog.close();
+});
+
 window.addEventListener("resize", fitToWindow);
 applyColor(settings.color);
 fitToWindow();
