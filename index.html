@@ -6,7 +6,7 @@
     <title>Time</title>
     <meta
       name="description"
-      content="A full-screen seven-segment digital clock."
+      content="A full-screen seven-segment digital clock and session stopwatch."
     />
     <meta name="theme-color" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -31,6 +31,18 @@
   </head>
   <body>
     <div class="controls">
+      <button id="mode-toggle" aria-label="Switch to stopwatch">
+        <svg viewBox="0 0 16 16">
+          <g class="mode-stopwatch">
+            <circle cx="8" cy="9" r="6" />
+            <path d="M6.5 1.5h3M8 1.5V3M8 9V6M12.6 3.9l1 1" />
+          </g>
+          <g class="mode-clock">
+            <circle cx="8" cy="8" r="7" />
+            <path d="M8 4v4l2.5 1.5" />
+          </g>
+        </svg>
+      </button>
       <button id="info-open" aria-label="About" aria-haspopup="dialog">
         <svg viewBox="0 0 16 16">
           <circle cx="8" cy="8" r="7" />
@@ -88,8 +100,70 @@
           ><span class="ampm" id="ampm">PM</span>
         </div>
         <div class="date" id="date">TUE - OCT 6, 2026</div>
+        <div class="sw-actions" id="sw-actions" hidden>
+          <button id="sw-start" aria-label="Start" title="Start">
+            <svg viewBox="0 0 16 16"><path d="M5 3l8 5-8 5z" /></svg>
+          </button>
+          <button id="sw-pause" aria-label="Pause" title="Pause">
+            <svg viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10" /></svg>
+          </button>
+          <button id="sw-resume" aria-label="Resume" title="Resume">
+            <svg viewBox="0 0 16 16"><path d="M5 3l8 5-8 5z" /></svg>
+          </button>
+          <button id="sw-stop" aria-label="Stop" title="Stop">
+            <svg viewBox="0 0 16 16"><path d="M3.5 3.5h9v9h-9z" /></svg>
+          </button>
+          <button
+            id="sw-tasks"
+            aria-label="Tasks"
+            title="Tasks"
+            aria-controls="tasks-drawer"
+            aria-expanded="false"
+          >
+            <svg viewBox="0 0 16 16">
+              <path
+                d="M1.5 3.5l1.25 1.25L5 2.5M1.5 8.5l1.25 1.25L5 7.5M7.5 3.5h7M7.5 8.5h7M7.5 13.5h7M2 13.5h2.5"
+              />
+            </svg>
+          </button>
+          <button
+            id="history-open"
+            aria-label="Session history"
+            title="History"
+            aria-haspopup="dialog"
+          >
+            <svg viewBox="0 0 16 16">
+              <path d="M2 5.5A6.5 6.5 0 1 1 1.5 8M2 2.5v3h3M8 4.5V8l2.5 1.5" />
+            </svg>
+          </button>
+        </div>
       </div>
     </main>
+
+    <aside
+      class="drawer"
+      id="tasks-drawer"
+      aria-label="Tasks"
+      aria-hidden="true"
+      inert
+    >
+      <header class="drawer-header">
+        <h2>Tasks <span id="tasks-count"></span></h2>
+        <button class="drawer-close" id="tasks-close" aria-label="Close tasks">
+          <svg viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>
+        </button>
+      </header>
+      <ul class="tasks" id="session-tasks"></ul>
+      <form class="add-task" id="session-add">
+        <input
+          type="text"
+          placeholder="Add a task"
+          aria-label="New task"
+          maxlength="200"
+        />
+        <button class="btn" type="submit">Add</button>
+      </form>
+    </aside>
 
     <div class="backdrop" id="backdrop" hidden></div>
     <aside
@@ -141,8 +215,124 @@
       </section>
     </aside>
 
-    <dialog class="about" id="about" aria-labelledby="about-title">
-      <div class="about-body">
+    <dialog class="modal" id="start-dialog" aria-labelledby="start-title">
+      <div class="modal-body">
+        <header class="drawer-header">
+          <h2 id="start-title">New session</h2>
+          <button class="drawer-close" data-close aria-label="Close">
+            <svg viewBox="0 0 16 16">
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+            </svg>
+          </button>
+        </header>
+        <p class="hint">What do you hope to cross off this session?</p>
+        <section class="modal-section" id="start-pending">
+          <h3 class="label">Left over from earlier sessions</h3>
+          <ul class="tasks" id="start-pending-list"></ul>
+        </section>
+        <section class="modal-section">
+          <h3 class="label">New tasks</h3>
+          <ul class="tasks" id="start-new-list"></ul>
+          <form class="add-task" id="start-add">
+            <input
+              type="text"
+              placeholder="Add a task"
+              aria-label="New task"
+              maxlength="200"
+            />
+            <button class="btn" type="submit">Add</button>
+          </form>
+        </section>
+        <footer class="modal-actions">
+          <button class="btn" data-close>Cancel</button>
+          <button class="btn primary" id="start-submit">Start stopwatch</button>
+        </footer>
+      </div>
+    </dialog>
+
+    <dialog class="modal" id="stop-dialog" aria-labelledby="stop-title">
+      <div class="modal-body">
+        <header class="drawer-header">
+          <h2 id="stop-title">End session</h2>
+          <button class="drawer-close" data-close aria-label="Keep going">
+            <svg viewBox="0 0 16 16">
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+            </svg>
+          </button>
+        </header>
+        <p class="hint" id="stop-summary"></p>
+        <section class="modal-section" id="stop-remaining">
+          <h3 class="label">Still open</h3>
+          <p class="hint">
+            Tick any you finished. Anything left unticked is suggested next
+            session.
+          </p>
+          <ul class="tasks" id="stop-list"></ul>
+        </section>
+        <section class="modal-section">
+          <h3 class="label"><label for="stop-note">Note</label></h3>
+          <textarea
+            id="stop-note"
+            rows="4"
+            placeholder="How did the session go?"
+          ></textarea>
+        </section>
+        <footer class="modal-actions">
+          <button class="btn" data-close>Keep going</button>
+          <button class="btn primary" id="stop-save">Save session</button>
+        </footer>
+      </div>
+    </dialog>
+
+    <dialog
+      class="modal modal-wide"
+      id="history-dialog"
+      aria-labelledby="history-title"
+    >
+      <div class="modal-body">
+        <header class="drawer-header">
+          <h2 id="history-title">History</h2>
+          <button class="drawer-close" data-close aria-label="Close">
+            <svg viewBox="0 0 16 16">
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+            </svg>
+          </button>
+        </header>
+        <p class="hint" id="history-totals"></p>
+        <input
+          type="search"
+          class="history-search"
+          id="history-search"
+          placeholder="Search notes and tasks"
+          aria-label="Search notes and tasks"
+          aria-controls="history-list"
+        />
+        <p class="hint history-status" id="history-status" aria-live="polite"></p>
+        <ol class="history-list" id="history-list"></ol>
+        <nav class="pager" id="history-pager" aria-label="History pages">
+          <button class="btn" id="history-prev">Newer</button>
+          <span id="history-page"></span>
+          <button class="btn" id="history-next">Older</button>
+        </nav>
+        <footer class="history-clear" id="history-clear">
+          <button class="task-action" id="history-clear-start">
+            Clear history
+          </button>
+          <div class="history-confirm" id="history-confirm" hidden>
+            <p id="history-confirm-text" role="alert"></p>
+            <div class="modal-actions">
+              <button class="btn" id="history-clear-cancel">Cancel</button>
+              <button class="btn danger" id="history-clear-confirm">
+                Clear history
+              </button>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </dialog>
+
+    <dialog class="modal about" id="about" aria-labelledby="about-title">
+      <div class="modal-body">
         <header class="drawer-header">
           <h2 id="about-title">
             Time: Built by Kram <small>(and Claude)</small>
@@ -220,6 +410,7 @@
       </div>
     </dialog>
 
+    <script src="sessions.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

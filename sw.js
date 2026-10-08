@@ -1,9 +1,10 @@
 // Changing the version clears old caches; updates show on reload either way since fetches are network-first.
-const CACHE = "time-v1";
+const CACHE = "time-v2";
 const SHELL = [
   "./",
   "index.html",
   "style.css",
+  "sessions.js",
   "script.js",
   "manifest.webmanifest",
   "fonts/DS-DIGIT.TTF",

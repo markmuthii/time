@@ -225,7 +225,7 @@ body {
   margin-bottom: 24px;
 }
 .drawer h2,
-.about h2 {
+.modal h2 {
   font-size: 20px;
   font-weight: 400;
 }
@@ -340,10 +340,12 @@ body {
   stroke: none;
 }
 
-/* About modal */
-.about {
+/* Modals */
+.modal {
   margin: auto;
   width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   padding: 0;
   border: 1px solid #2a2a2a;
   border-radius: 10px;
@@ -351,19 +353,19 @@ body {
   color: #e6e6e6;
   font-family: "Segoe UI", "Open Sans", sans-serif;
 }
-.about::backdrop {
+.modal::backdrop {
   background: rgba(0, 0, 0, 0.6);
 }
 
-.about-body {
+.modal-body {
   padding: 20px 24px 24px;
   font-size: 14px;
   line-height: 1.6;
 }
-.about-body .drawer-header {
+.modal-body .drawer-header {
   margin-bottom: 2px;
 }
-.about-body p + p {
+.about p + p {
   margin-top: 12px;
 }
 .about h2 small {
@@ -410,17 +412,17 @@ body {
   fill: var(--clock-color);
 }
 
-/* Larger type for the about modal on desktop; it grows with the screen so it stays in proportion to the clock. */
+/* Larger type for the modals on desktop; it grows with the screen so it stays in proportion to the clock. */
 @media (min-width: 768px) {
-  .about {
+  .modal {
     font-size: clamp(17px, 0.85vw, 24px);
     width: min(37.5em, calc(100vw - 32px));
   }
-  .about-body {
+  .modal-body {
     padding: 1.6em 1.9em 1.9em;
     font-size: 1em;
   }
-  .about h2 {
+  .modal h2 {
     font-size: 1.5em;
   }
   .about-role {
@@ -430,9 +432,337 @@ body {
     padding: 0.5em 0.9em;
     font-size: 0.88em;
   }
-  .about .drawer-close {
+  .modal .drawer-close {
     width: 1.9em;
     height: 1.9em;
     padding: 0.45em;
+  }
+}
+
+/* Anything with the hidden attribute stays hidden, whatever display its class sets. */
+[hidden] {
+  display: none !important;
+}
+
+/* Stopwatch mode */
+.controls button {
+  position: relative;
+}
+#mode-toggle .mode-clock,
+#mode-toggle.is-stopwatch .mode-stopwatch {
+  display: none;
+}
+#mode-toggle.is-stopwatch .mode-clock {
+  display: inline;
+}
+/* A dot on the stopwatch icon shows a session is still going while the clock is up. */
+#mode-toggle.has-badge::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--clock-color);
+}
+
+.clock.is-paused .time {
+  animation: blink 1.2s steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clock.is-paused .time {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+.drawer h2 span {
+  margin-left: 6px;
+  color: var(--clock-color);
+}
+
+/* Stopwatch actions: a row of icons centred under the status line, scaled with the clock. */
+.sw-actions {
+  display: flex;
+  justify-content: center;
+  /* Never smaller than 32 screen pixels, so they stay easy to tap on a phone. */
+  --sw-icon: max(84px, calc(32px / var(--scale)));
+  gap: calc(var(--sw-icon) * 0.6);
+  margin-top: 10px;
+  /* Matches the date's optical offset so the row lines up under it. */
+  margin-right: -7.3px;
+}
+.sw-actions button {
+  width: var(--sw-icon);
+  height: var(--sw-icon);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.sw-actions button:hover {
+  opacity: 1;
+}
+.sw-actions button:focus-visible {
+  outline: 2px solid var(--clock-color);
+  outline-offset: 6px;
+  border-radius: 4px;
+}
+.sw-actions svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--clock-color);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Shared bits for the tasks drawer and the session modals */
+.hint {
+  color: #9a9a9a;
+}
+.label {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+}
+.modal-section {
+  margin-top: 18px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.btn {
+  padding: 7px 14px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: none;
+  color: #e6e6e6;
+  font: inherit;
+  cursor: pointer;
+}
+.btn:hover {
+  border-color: var(--clock-color);
+  color: var(--clock-color);
+}
+.btn.primary {
+  border-color: var(--clock-color);
+  background: var(--clock-color);
+  color: #000;
+}
+.btn.primary:hover {
+  filter: brightness(1.1);
+  color: #000;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: none;
+}
+.btn:focus-visible,
+.task-action:focus-visible,
+.task input:focus-visible,
+.add-task input:focus-visible,
+.modal textarea:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.tasks {
+  list-style: none;
+}
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #222;
+}
+.task label {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.task input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  accent-color: var(--clock-color);
+  cursor: pointer;
+}
+.task:has(input) label {
+  cursor: pointer;
+}
+.task.done span {
+  text-decoration: line-through;
+  text-decoration-color: var(--clock-color);
+  color: #777;
+}
+.task-action {
+  flex: none;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: #777;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.task-action:hover {
+  color: var(--clock-color);
+}
+.drawer .task-action {
+  opacity: 0;
+}
+.drawer .task:hover .task-action,
+.drawer .task-action:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .drawer .task-action {
+    opacity: 1;
+  }
+}
+
+.add-task {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.add-task input,
+.modal textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #0b0b0b;
+  color: #e6e6e6;
+  font: inherit;
+}
+.modal textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+}
+
+/* History */
+.modal-wide {
+  width: min(640px, calc(100vw - 32px));
+}
+.history-search {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 7px 10px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #0b0b0b;
+  color: #e6e6e6;
+  font: inherit;
+}
+.history-search:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.history-status:not(:empty) {
+  margin-top: 8px;
+}
+.history-list {
+  list-style: none;
+  margin-top: 16px;
+}
+.history-clear {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #2a2a2a;
+}
+.history-clear > .task-action {
+  padding: 0;
+  font-size: 13px;
+}
+.history-confirm .modal-actions {
+  margin-top: 12px;
+}
+.btn.danger {
+  border-color: #ff453a;
+  background: #ff453a;
+  color: #000;
+}
+.btn.danger:hover {
+  filter: brightness(1.1);
+  color: #000;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid #2a2a2a;
+  color: #9a9a9a;
+}
+.history-item {
+  padding: 14px 0;
+  border-top: 1px solid #2a2a2a;
+}
+.history-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+}
+.history-head span {
+  color: var(--clock-color);
+}
+.history-item .task {
+  border-bottom: 0;
+  padding: 2px 0;
+}
+.history-item .task::before {
+  content: "○";
+  flex: none;
+  width: 14px;
+  color: #777;
+}
+.history-item .task.done::before {
+  content: "✓";
+  color: var(--clock-color);
+}
+.history-note {
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--clock-color);
+  color: #bbb;
+  white-space: pre-wrap;
+}
+.history-item > .task-action {
+  margin-top: 8px;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .modal-wide {
+    width: min(42em, calc(100vw - 32px));
   }
 }
