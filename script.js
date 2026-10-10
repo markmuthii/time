@@ -13,13 +13,15 @@ const COLORS = [
   { name: "White", value: "#f2f2f2" },
 ];
 const STORAGE_KEY = "clock-settings";
-const DEFAULT_SETTINGS = { format: "24", color: COLORS[0].value, mode: "clock" };
+const DEFAULT_SETTINGS = { format: "24", color: COLORS[0].value, mode: "clock", face: "digital" };
 
 const root = document.documentElement;
 const clockEl = document.getElementById("clock");
 const timeEl = document.getElementById("time");
 const ampmEl = document.getElementById("ampm");
 const dateEl = document.getElementById("date");
+const flipAmpmEl = document.getElementById("flip-ampm");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 let zoom = 1;
 let settings = loadSettings();
@@ -56,6 +58,86 @@ function renderDigits(time) {
     .join("");
 }
 
+// Flip face: each card stacks a static top and bottom half with two flaps that animate between them.
+// While flipping, the top half already shows the new value and the bottom half the old one; the old top
+// flap folds down out of sight, then the new bottom flap folds down over the old bottom half.
+function makeFlipCard(card) {
+  const half = (className, hidden = true) => {
+    const el = document.createElement("div");
+    el.className = `flip-half ${className}`;
+    if (hidden) el.setAttribute("aria-hidden", "true");
+    el.append(document.createElement("span"));
+    card.append(el);
+    return el.firstChild;
+  };
+  return {
+    card,
+    top: half("flip-top", false),
+    bottom: half("flip-bottom"),
+    out: half("flip-top flap flap-out"),
+    in: half("flip-bottom flap flap-in"),
+    value: null,
+  };
+}
+
+const flipCards = ["hours", "minutes", "seconds"].map((unit) => makeFlipCard(document.getElementById(`flip-${unit}`)));
+
+function setFlipCard(flip, value) {
+  if (value === flip.value) return;
+  const old = flip.value;
+  flip.value = value;
+  flip.top.textContent = flip.in.textContent = value;
+  flip.card.classList.remove("flipping");
+  // The first value after switching faces (or with reduced motion) just appears.
+  if (old === null || reduceMotion.matches) {
+    flip.bottom.textContent = value;
+    return;
+  }
+  flip.bottom.textContent = flip.out.textContent = old;
+  void flip.card.offsetWidth; // Restart the animation.
+  flip.card.classList.add("flipping");
+}
+
+// Analog face: twelve hour marks and a dot for each minute between them, drawn once.
+const ticksEl = document.getElementById("analog-ticks");
+for (let i = 0; i < 60; i++) {
+  const hour = i % 5 === 0;
+  const tick = document.createElementNS("http://www.w3.org/2000/svg", hour ? "line" : "circle");
+  tick.setAttribute("class", hour ? "tick tick-hour" : "tick tick-minute");
+  tick.setAttribute("transform", `rotate(${i * 6})`);
+  if (hour) {
+    tick.setAttribute("y1", "-76");
+    tick.setAttribute("y2", "-86");
+  } else {
+    tick.setAttribute("cy", "-85");
+    tick.setAttribute("r", "1");
+  }
+  ticksEl.append(tick);
+}
+
+const hands = Object.fromEntries(
+  ["hour", "minute", "second"].map((name) => [name, document.getElementById(`hand-${name}`)]),
+);
+
+function renderAnalog(hours, minutes, seconds) {
+  const turn = (hand, fraction) => hand.setAttribute("transform", `rotate(${fraction * 360})`);
+  turn(hands.hour, ((hours % 12) + minutes / 60) / 12);
+  turn(hands.minute, (minutes + seconds / 60) / 60);
+  turn(hands.second, seconds / 60);
+}
+
+// Shows a time on the selected face. `pairs` are the displayed digit pairs (e.g. [" 9", "05", "33"]);
+// the analog hands use the raw values.
+function renderTime(pairs, hours, minutes, seconds) {
+  if (settings.face === "flip") {
+    pairs.forEach((pair, i) => setFlipCard(flipCards[i], pair.trim()));
+  } else if (settings.face === "analog") {
+    renderAnalog(hours, minutes, seconds);
+  } else {
+    renderDigits(pairs.join(":"));
+  }
+}
+
 function renderClock() {
   const now = new Date();
   const hours = now.getHours();
@@ -63,16 +145,19 @@ function renderClock() {
   // A single-digit 12-hour value keeps an empty leading cell so the row width never changes.
   const displayHours = is24 ? pad(hours) : String(hours % 12 || 12).padStart(2, " ");
 
-  renderDigits(`${displayHours}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`);
-  ampmEl.textContent = hours < 12 ? "AM" : "PM";
-  ampmEl.hidden = is24;
+  renderTime([displayHours, pad(now.getMinutes()), pad(now.getSeconds())], hours, now.getMinutes(), now.getSeconds());
+  ampmEl.textContent = flipAmpmEl.textContent = hours < 12 ? "AM" : "PM";
+  ampmEl.hidden = flipAmpmEl.hidden = is24;
   dateEl.textContent = `${DAYS[now.getDay()]} - ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
 }
 
 function renderStopwatch() {
   const seconds = Math.floor((active ? elapsedOf(active) : 0) / 1000);
-  renderDigits(`${pad(Math.floor(seconds / 3600))}:${pad(Math.floor(seconds / 60) % 60)}:${pad(seconds % 60)}`);
-  ampmEl.hidden = true;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor(seconds / 60) % 60;
+  const s = seconds % 60;
+  renderTime([pad(h), pad(m), pad(s)], h, m, s);
+  ampmEl.hidden = flipAmpmEl.hidden = true;
   if (active) {
     const done = active.tasks.filter((task) => task.done).length;
     dateEl.textContent = `${active.resumedAt ? "RUNNING" : "PAUSED"} - ${done}/${active.tasks.length} DONE`;
@@ -101,10 +186,10 @@ function fitToWindow() {
   setZoom(zoom);
 }
 
-// The largest zoom at which the time row (including AM/PM), the date and the stopwatch actions still fit the window.
+// The largest zoom at which the clock face (including AM/PM), the date and the stopwatch actions still fit the window.
 // Rendered sizes grow linearly with zoom, so measuring at the current zoom and dividing it out gives the size at 1x.
 function maxZoom() {
-  const rows = [document.querySelector(".time"), dateEl, document.getElementById("sw-actions")];
+  const rows = [...document.querySelectorAll(".face"), dateEl, document.getElementById("sw-actions")];
   const rects = rows.filter((el) => !el.hidden).map((el) => el.getBoundingClientRect());
   const width = Math.max(...rects.map((r) => r.width)) / zoom;
   const height = (Math.max(...rects.map((r) => r.bottom)) - Math.min(...rects.map((r) => r.top))) / zoom;
@@ -198,6 +283,22 @@ for (const input of document.querySelectorAll('input[name="format"]')) {
     // AM/PM makes the 12-hour row wider, so the current zoom may no longer fit.
     setZoom(zoom);
   });
+}
+
+function applyFace(face) {
+  settings.face = face;
+  for (const el of document.querySelectorAll(".face")) el.hidden = el.dataset.face !== face;
+  for (const input of document.querySelectorAll('input[name="face"]')) input.checked = input.value === face;
+  // Flip cards that come back into view show their value straight away rather than flipping from a stale one.
+  for (const flip of flipCards) flip.value = null;
+  saveSettings();
+  render();
+  // Each face has its own size, so the current zoom may no longer fit.
+  setZoom(zoom);
+}
+
+for (const input of document.querySelectorAll('input[name="face"]')) {
+  input.addEventListener("change", () => applyFace(input.value));
 }
 
 document
@@ -658,6 +759,8 @@ applyColor(settings.color);
 renderSession();
 scheduleTick();
 fitToWindow();
+// After fitting, so the zoom check for the chosen face measures it at the right scale.
+applyFace(settings.face);
 // The digital font changes the clock's width once it loads, so re-check the zoom then.
 document.fonts.ready.then(() => setZoom(zoom));
 

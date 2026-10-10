@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
@@ -91,13 +91,33 @@
 
     <main class="stage" id="stage">
       <div class="clock" id="clock">
-        <div class="time">
+        <div class="time face" data-face="digital">
           <span id="time"
             ><span class="digit digit-one">1</span><span class="digit">0</span
             ><span class="colon">:</span><span class="digit">0</span
             ><span class="digit">7</span><span class="colon">:</span
             ><span class="digit">3</span><span class="digit">3</span></span
           ><span class="ampm" id="ampm">PM</span>
+        </div>
+        <div class="flip face" data-face="flip" hidden>
+          <div class="flip-card" id="flip-hours">
+            <span class="flip-ampm" id="flip-ampm">PM</span>
+          </div>
+          <span class="flip-colon"></span>
+          <div class="flip-card" id="flip-minutes"></div>
+          <span class="flip-colon"></span>
+          <div class="flip-card" id="flip-seconds"></div>
+        </div>
+        <div class="analog face" data-face="analog" hidden>
+          <svg viewBox="-100 -100 200 200" aria-hidden="true">
+            <circle class="rim" r="96" />
+            <g id="analog-ticks"></g>
+            <line class="hand hand-hour" id="hand-hour" y1="12" y2="-48" />
+            <line class="hand hand-minute" id="hand-minute" y1="14" y2="-72" />
+            <line class="hand hand-second" id="hand-second" y1="20" y2="-82" />
+            <circle class="cap" r="5" />
+            <circle class="cap-inner" r="2" />
+          </svg>
         </div>
         <div class="date" id="date">TUE - OCT 6, 2026</div>
         <div class="sw-actions" id="sw-actions" hidden>
@@ -183,6 +203,27 @@
           <svg viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>
         </button>
       </header>
+
+      <section class="setting">
+        <h3>Clock face</h3>
+        <div class="segmented" role="radiogroup" aria-label="Clock face">
+          <label
+            ><input type="radio" name="face" value="digital" /><span
+              >Digital</span
+            ></label
+          >
+          <label
+            ><input type="radio" name="face" value="flip" /><span
+              >Flip</span
+            ></label
+          >
+          <label
+            ><input type="radio" name="face" value="analog" /><span
+              >Analog</span
+            ></label
+          >
+        </div>
+      </section>
 
       <section class="setting">
         <h3>Time format</h3>

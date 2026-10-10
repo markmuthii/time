@@ -131,6 +131,158 @@ body {
   display: none;
 }
 
+/* Flip face: three cards (hours, minutes, seconds), each split across the middle like a split-flap display. */
+.flip {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+}
+
+.flip-card {
+  position: relative;
+  width: 540px;
+  height: 600px;
+  perspective: 2400px;
+  font-family: "Open Sans", "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 420px;
+  font-variant-numeric: tabular-nums;
+  line-height: 600px;
+}
+
+.flip-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: #161616;
+  backface-visibility: hidden;
+}
+.flip-top {
+  top: 0;
+  border-radius: 36px 36px 0 0;
+  transform-origin: bottom;
+}
+.flip-bottom {
+  bottom: 0;
+  border-radius: 0 0 36px 36px;
+  background: #121212;
+  transform-origin: top;
+}
+/* Each half shows its share of a full-height digit. */
+.flip-half span {
+  display: block;
+  height: 200%;
+  text-align: center;
+}
+.flip-bottom span {
+  transform: translateY(-50%);
+}
+
+/* The hinge between the two halves. */
+.flip-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  z-index: 2;
+  height: 6px;
+  margin-top: -3px;
+  background: #000;
+}
+
+.flap {
+  display: none;
+}
+.flipping .flap {
+  display: block;
+}
+.flipping .flap-out {
+  animation: flap-out 0.25s ease-in both;
+}
+.flipping .flap-in {
+  animation: flap-in 0.25s ease-out 0.25s both;
+}
+@keyframes flap-out {
+  to {
+    transform: rotateX(-90deg);
+  }
+}
+@keyframes flap-in {
+  from {
+    transform: rotateX(90deg);
+  }
+}
+
+.flip-ampm {
+  position: absolute;
+  top: 32px;
+  left: 36px;
+  z-index: 3;
+  font-size: 60px;
+  line-height: 1;
+}
+
+.flip-colon {
+  display: flex;
+  flex-direction: column;
+  gap: 120px;
+}
+.flip-colon::before,
+.flip-colon::after {
+  content: "";
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--clock-color);
+}
+
+/* Analog face: a round dial with rounded hands, drawn in a 200 x 200 SVG. */
+.analog {
+  width: 860px;
+  height: 860px;
+}
+.analog svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.analog .rim {
+  fill: #0d0d0d;
+  stroke: var(--clock-color);
+  stroke-width: 2.5;
+}
+.analog .tick-hour {
+  stroke: var(--clock-color);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+.analog .tick-minute {
+  fill: var(--clock-color);
+  opacity: 0.5;
+}
+.analog .hand {
+  stroke: var(--clock-color);
+  stroke-linecap: round;
+}
+.analog .hand-hour {
+  stroke-width: 7;
+}
+.analog .hand-minute {
+  stroke-width: 4.5;
+}
+.analog .hand-second {
+  stroke-width: 1.6;
+}
+.analog .cap {
+  fill: var(--clock-color);
+}
+.analog .cap-inner {
+  fill: #0d0d0d;
+}
+
 .date {
   margin-top: 58px;
   /* Balances the larger line boxes of the digit rows so the whole group centres vertically. */
@@ -264,7 +416,8 @@ body {
 
 .segmented {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   border: 1px solid #333;
   border-radius: 6px;
   overflow: hidden;
@@ -467,7 +620,7 @@ body {
   background: var(--clock-color);
 }
 
-.clock.is-paused .time {
+.clock.is-paused .face {
   animation: blink 1.2s steps(1) infinite;
 }
 @keyframes blink {
@@ -476,7 +629,7 @@ body {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .clock.is-paused .time {
+  .clock.is-paused .face {
     animation: none;
     opacity: 0.5;
   }
