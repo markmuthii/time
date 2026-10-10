@@ -438,6 +438,32 @@ body {
 .segmented label + label span {
   border-left: 1px solid #333;
 }
+
+/* A one-column list, for options too long to sit side by side. */
+.segmented.stacked {
+  grid-auto-flow: row;
+}
+.segmented.stacked label + label > span {
+  border-top: 1px solid #333;
+  border-left: 0;
+}
+.segmented.stacked > label > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  text-align: left;
+}
+/* The example inside each option is plain text, not another option box. */
+.segmented.stacked span span {
+  display: inline;
+  padding: 0;
+  border: 0;
+}
+.segmented.stacked small {
+  font-size: 12px;
+  opacity: 0.6;
+}
 .segmented input:checked + span {
   background: var(--clock-color);
   color: #000;

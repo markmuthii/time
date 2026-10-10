@@ -10,7 +10,7 @@ I built it for myself, to sit in the frame when I record timelapse videos of my 
 
 - Seven-segment display that scales to fill any screen, with a steady layout that never shifts as the digits change
 - Three clock faces to pick from in settings: the seven-segment digital display, a split-flap flip clock, and a round analog dial
-- 12-hour or 24-hour time, with the date underneath
+- 12-hour or 24-hour time (digital and flip faces), with the date underneath in one of five formats, or hidden
 - Eight preset colours plus a custom colour picker
 - Zoom in and out (kept within the window) and a fullscreen toggle
 - Stopwatch mode for focused work sessions (see below)

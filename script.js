@@ -13,7 +13,22 @@ const COLORS = [
   { name: "White", value: "#f2f2f2" },
 ];
 const STORAGE_KEY = "clock-settings";
-const DEFAULT_SETTINGS = { format: "24", color: COLORS[0].value, mode: "clock", face: "digital" };
+// Each date format's hint spells out the order of numeric dates, which an example alone can leave ambiguous.
+const DATE_FORMATS = [
+  { value: "us", format: (d) => `${DAYS[d.getDay()]} - ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` },
+  { value: "uk", format: (d) => `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}` },
+  { value: "dmy", hint: "DD/MM/YYYY", format: (d) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}` },
+  { value: "mdy", hint: "MM/DD/YYYY", format: (d) => `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}` },
+  { value: "iso", hint: "YYYY-MM-DD", format: (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` },
+];
+const DEFAULT_SETTINGS = {
+  format: "24",
+  color: COLORS[0].value,
+  mode: "clock",
+  face: "digital",
+  date: "show",
+  dateFormat: DATE_FORMATS[0].value,
+};
 
 const root = document.documentElement;
 const clockEl = document.getElementById("clock");
@@ -148,7 +163,8 @@ function renderClock() {
   renderTime([displayHours, pad(now.getMinutes()), pad(now.getSeconds())], hours, now.getMinutes(), now.getSeconds());
   ampmEl.textContent = flipAmpmEl.textContent = hours < 12 ? "AM" : "PM";
   ampmEl.hidden = flipAmpmEl.hidden = is24;
-  dateEl.textContent = `${DAYS[now.getDay()]} - ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  dateEl.textContent = dateFormat().format(now);
+  dateEl.hidden = settings.date === "hide";
 }
 
 function renderStopwatch() {
@@ -158,6 +174,8 @@ function renderStopwatch() {
   const s = seconds % 60;
   renderTime([pad(h), pad(m), pad(s)], h, m, s);
   ampmEl.hidden = flipAmpmEl.hidden = true;
+  // In the stopwatch this line is the session status, so it shows whatever the date setting says.
+  dateEl.hidden = false;
   if (active) {
     const done = active.tasks.filter((task) => task.done).length;
     dateEl.textContent = `${active.resumedAt ? "RUNNING" : "PAUSED"} - ${done}/${active.tasks.length} DONE`;
@@ -285,8 +303,16 @@ for (const input of document.querySelectorAll('input[name="format"]')) {
   });
 }
 
+// Only show the settings that apply: the time format means nothing on the analog dial, and the
+// date format nothing while the date is hidden.
+function updateSettingsVisibility() {
+  document.getElementById("format-setting").hidden = settings.face === "analog";
+  document.getElementById("date-format-setting").hidden = settings.date === "hide";
+}
+
 function applyFace(face) {
   settings.face = face;
+  updateSettingsVisibility();
   for (const el of document.querySelectorAll(".face")) el.hidden = el.dataset.face !== face;
   for (const input of document.querySelectorAll('input[name="face"]')) input.checked = input.value === face;
   // Flip cards that come back into view show their value straight away rather than flipping from a stale one.
@@ -301,9 +327,50 @@ for (const input of document.querySelectorAll('input[name="face"]')) {
   input.addEventListener("change", () => applyFace(input.value));
 }
 
-document
-  .getElementById("settings-open")
-  .addEventListener("click", () => setDrawerOpen(settingsDrawer, true, settingsDrawer.querySelector("input:checked")));
+const dateFormatsEl = document.getElementById("date-formats");
+
+// Unknown values (e.g. from an older version) fall back to the first format.
+const dateFormat = () => DATE_FORMATS.find((f) => f.value === settings.dateFormat) ?? DATE_FORMATS[0];
+
+// The options show today's date in each format, so they are rebuilt whenever the drawer opens.
+function renderDateFormats() {
+  const now = new Date();
+  dateFormatsEl.replaceChildren(
+    ...DATE_FORMATS.map(({ value, hint, format }) => {
+      const label = document.createElement("label");
+      label.innerHTML = `<input type="radio" name="date-format" value="${value}"><span><span></span><small></small></span>`;
+      label.querySelector("input").checked = value === dateFormat().value;
+      label.querySelector("span span").textContent = format(now);
+      label.querySelector("small").textContent = hint ?? "";
+      return label;
+    }),
+  );
+}
+
+dateFormatsEl.addEventListener("change", (event) => {
+  settings.dateFormat = event.target.value;
+  saveSettings();
+  render();
+  // Formats differ in width, so the current zoom may no longer fit.
+  setZoom(zoom);
+});
+
+for (const input of document.querySelectorAll('input[name="date"]')) {
+  input.checked = input.value === settings.date;
+  input.addEventListener("change", () => {
+    settings.date = input.value;
+    saveSettings();
+    updateSettingsVisibility();
+    render();
+    // Without the date there is room for a bigger clock, and with it there may be less.
+    setZoom(zoom);
+  });
+}
+
+document.getElementById("settings-open").addEventListener("click", () => {
+  renderDateFormats();
+  setDrawerOpen(settingsDrawer, true, settingsDrawer.querySelector("input:checked"));
+});
 document.getElementById("settings-close").addEventListener("click", () => setDrawerOpen(settingsDrawer, false));
 
 // Modals: <dialog> handles centring, focus trapping and closing with Esc.
