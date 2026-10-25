@@ -821,6 +821,10 @@ document.getElementById("history-open").addEventListener("click", () => {
   historyDialog.showModal();
 });
 
+// Keep the controls clear of the deprecation banner, whose height changes as its text wraps.
+const banner = document.getElementById("banner");
+new ResizeObserver(() => root.style.setProperty("--banner-height", `${banner.offsetHeight}px`)).observe(banner);
+
 window.addEventListener("resize", fitToWindow);
 applyColor(settings.color);
 renderSession();
