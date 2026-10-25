@@ -2,6 +2,9 @@
 
 A full-screen, seven-segment digital clock that runs in the browser and installs as an app.
 
+> [!IMPORTANT]
+> This version of the clock is no longer maintained. Check out **[Timelapps Club](https://timelapps.club)** instead. You can keep using time.kram.codes for now, but it will permanently move to Timelapps in a few days.
+
 **Live at [time.kram.codes](https://time.kram.codes)**
 
 I built it for myself, to sit in the frame when I record timelapse videos of my working sessions. Use it however you want. If it ends up in your videos, feel free to tag me [@kram.codes](https://instagram.com/Kram.Codes) on Instagram and [@kram.codes](https://www.tiktok.com/@kram.codes) on TikTok.
